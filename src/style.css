@@ -169,3 +169,155 @@ body {
   font-weight: 600 !important;
   color: #475569 !important;
 }
+
+/* SMS Counter styling */
+.sms-counter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: rgba(241, 245, 249, 0.8);
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  width: max-content;
+  max-width: 100%;
+}
+
+.sms-counter-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sms-counter-label {
+  color: #64748b;
+}
+
+.sms-counter-value {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.encoding-tag {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.encoding-tag.gsm-7 {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.encoding-tag.unicode {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Phone Book Layout styles */
+.sidebar-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.group-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  color: #475569;
+}
+
+.group-item:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.group-item.active {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.group-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.delete-group-icon {
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  font-size: 13px;
+}
+
+.delete-group-icon:hover {
+  color: #ef4444;
+}
+
+.premium-btn-small {
+  background: linear-gradient(135deg, #11998e, #38ef7d) !important;
+  border: none !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 10px rgba(17, 153, 142, 0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+.premium-btn-small:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(17, 153, 142, 0.3) !important;
+  color: white !important;
+}
+
+/* Inbox Table Premium Styling */
+.inbox-row td {
+  transition: background 0.2s ease !important;
+}
+
+.inbox-row:hover td {
+  background-color: #f0fdf9 !important;
+}
+
+.ant-table-tbody > .inbox-row:nth-child(even) > td {
+  background-color: #fafcff;
+}
+
+.ant-table-thead > tr > th {
+  background: linear-gradient(135deg, #f1f5f9, #e8f0f8) !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  color: #64748b !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  padding: 14px 16px !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding: 12px 16px !important;
+  vertical-align: middle !important;
+}

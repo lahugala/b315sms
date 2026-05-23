@@ -1,0 +1,10 @@
+[
+  {
+    "key": "1779571157489",
+    "date": "5/24/2026, 2:49:17 AM",
+    "type": "Bulk",
+    "recipient": "11 Contacts",
+    "content": "Click Reply on an inbox message. Verify that it switches to the Single SMS tab and the phone number field is prefilled with the sender's number.",
+    "status": "Completed (11 Success, 0 Failed)"
+  }
+]
