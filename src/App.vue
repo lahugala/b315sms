@@ -514,7 +514,8 @@
                   :columns="phonebookColumns" 
                   size="small"
                   :row-selection="{ selectedRowKeys: selectedPhonebookRowKeys, onChange: onPhonebookSelectChange }"
-                  :pagination="{ pageSize: 10 }"
+                  :pagination="phonebookPagination"
+                  @change="handlePhonebookTableChange"
                   :scroll="{ x: 'max-content' }"
                 >
                   <template #bodyCell="{ column, record }">
@@ -778,6 +779,23 @@ const selectedPhonebookRowKeys = ref([]);
 const onPhonebookSelectChange = (keys) => {
   selectedPhonebookRowKeys.value = keys;
 };
+
+const phonebookPagination = reactive({
+  current: 1,
+  pageSize: 10,
+  showSizeChanger: true,
+  pageSizeOptions: ['10', '20', '50', '100'],
+  showTotal: (total) => `Total ${total} contacts`,
+});
+
+const handlePhonebookTableChange = (pag) => {
+  phonebookPagination.current = pag.current;
+  phonebookPagination.pageSize = pag.pageSize;
+};
+
+watch([selectedGroupFilter, phonebookSearchQuery], () => {
+  phonebookPagination.current = 1;
+});
 
 // Modal for contacts
 const isContactModalVisible = ref(false);
