@@ -588,7 +588,7 @@
         title="Router Configuration"
         ok-text="Save"
         cancel-text="Cancel"
-        @ok="isSettingsModalVisible = false"
+        @ok="handleSaveConfig"
         destroyOnClose
       >
         <a-form layout="vertical" style="margin-top: 15px;">
@@ -749,6 +749,21 @@ const bulkProgress = reactive({ current: 0, total: 0, success: 0, failed: 0 });
 const history = ref([]);
 
 const isSettingsModalVisible = ref(false);
+
+const handleSaveConfig = async () => {
+  if (!credentials.routerIp || !credentials.username) {
+    message.error('Router IP and Username are required.');
+    return;
+  }
+  try {
+    await axios.post('http://localhost:3001/api/config', credentials);
+    message.success('Router configuration saved.');
+    isSettingsModalVisible.value = false;
+  } catch (error) {
+    console.error('Failed to save config:', error);
+    message.error('Failed to save router configuration.');
+  }
+};
 
 // Inbox State
 const inboxMessages = ref([]);
@@ -1369,6 +1384,17 @@ watch(activeTab, (newTab) => {
 });
 
 onMounted(async () => {
+  try {
+    const configRes = await axios.get('http://localhost:3001/api/config');
+    if (configRes.data) {
+      credentials.routerIp = configRes.data.routerIp || '192.168.8.1';
+      credentials.username = configRes.data.username || 'admin';
+      credentials.password = configRes.data.password || '';
+    }
+  } catch (err) {
+    console.error('Failed to load router configuration from server:', err);
+  }
+
   try {
     const inboxRes = await axios.get('http://localhost:3001/api/inbox');
     inboxMessages.value = inboxRes.data || [];

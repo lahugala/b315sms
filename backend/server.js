@@ -17,6 +17,8 @@ const GROUPS_FILE = path.join(DATA_DIR, 'groups.json');
 const PHONEBOOK_FILE = path.join(DATA_DIR, 'phonebook.json');
 const HISTORY_FILE = path.join(DATA_DIR, 'history.json');
 
+const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
+
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
@@ -33,6 +35,31 @@ initJsonFile(PHONEBOOK_FILE, [
     { key: '2', name: 'Jane Smith', phone: '0719876543', group: 'Family' }
 ]);
 initJsonFile(HISTORY_FILE, []);
+initJsonFile(CONFIG_FILE, {
+    routerIp: '192.168.8.1',
+    username: 'admin',
+    password: ''
+});
+
+// Config REST routes
+app.get('/api/config', (req, res) => {
+    try {
+        const data = fs.readFileSync(CONFIG_FILE, 'utf8');
+        res.json(JSON.parse(data));
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to load configuration' });
+    }
+});
+
+app.post('/api/config', (req, res) => {
+    try {
+        const { routerIp, username, password } = req.body;
+        fs.writeFileSync(CONFIG_FILE, JSON.stringify({ routerIp, username, password }, null, 2));
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to save configuration' });
+    }
+});
 
 // Groups REST routes
 app.get('/api/groups', (req, res) => {
