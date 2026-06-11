@@ -121,6 +121,16 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
               <span style="font-weight: 600; font-size: 15px; color: #334155;">Contact List Preview</span>
               <div style="display: flex; align-items: center; gap: 12px;">
+                <a-button 
+                  v-if="contacts.some(c => !isMobileNumber(c.phone))"
+                  type="default" 
+                  danger 
+                  size="small" 
+                  style="border-radius: 6px;" 
+                  @click="removeNonMobileFromPreview"
+                >
+                  <DeleteOutlined /> Remove Non-Mobile
+                </a-button>
                 <span style="font-size: 13px; color: #64748b;">Selected: <strong style="color: #11998e;">{{ selectedRowKeys.length }}</strong> / {{ contacts.length }}</span>
                 <a-badge :count="contacts.length" :number-style="{ backgroundColor: '#11998e' }" />
               </div>
@@ -137,6 +147,12 @@
               bordered
             >
               <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'phone'">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span>{{ record.phone }}</span>
+                    <a-tag v-if="!isMobileNumber(record.phone)" color="red" style="border-radius: 4px; font-size: 11px; padding: 0 4px;">Non-Mobile</a-tag>
+                  </div>
+                </template>
                 <template v-if="column.key === 'status'">
                   <a-tag :color="getStatusColor(record.status)" style="border-radius: 6px; font-weight: 500;">
                     <template #icon v-if="record.status === 'sending...'">
@@ -426,6 +442,30 @@
                     >
                       <RocketOutlined /> Send to Broadcast
                     </a-button>
+                    <a-popconfirm
+                      title="Are you sure you want to remove all contacts with non-mobile phone numbers from the entire phone book?"
+                      ok-text="Yes, Remove"
+                      cancel-text="No"
+                      @confirm="removeNonMobileContacts"
+                    >
+                      <a-button type="default" danger>
+                        <DeleteOutlined /> Remove Non-Mobile
+                      </a-button>
+                    </a-popconfirm>
+                    <a-button type="default" @click="exportAllContacts" :disabled="phonebook.length === 0">
+                      <CloudDownloadOutlined /> Export All
+                    </a-button>
+                    <a-popconfirm
+                      title="Are you sure you want to delete ALL contacts from the entire phone book? This cannot be undone."
+                      ok-text="Yes, Delete All"
+                      cancel-text="No"
+                      ok-type="danger"
+                      @confirm="deleteAllContacts"
+                    >
+                      <a-button type="default" danger :disabled="phonebook.length === 0">
+                        <DeleteOutlined /> Delete All
+                      </a-button>
+                    </a-popconfirm>
                     <a-button type="default" @click="openImportModal">
                       <CloudUploadOutlined /> Import
                     </a-button>
@@ -478,6 +518,12 @@
                   :scroll="{ x: 'max-content' }"
                 >
                   <template #bodyCell="{ column, record }">
+                    <template v-if="column.key === 'phone'">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <span>{{ record.phone }}</span>
+                        <a-tag v-if="!isMobileNumber(record.phone)" color="red" style="border-radius: 4px; font-size: 11px; padding: 0 4px;">Non-Mobile</a-tag>
+                      </div>
+                    </template>
                     <template v-if="column.key === 'groups'">
                       <div style="display: flex; flex-wrap: wrap; gap: 4px;">
                         <a-tag v-for="grp in (record.groups || [])" :key="grp" color="blue" style="border-radius: 6px;">
@@ -596,9 +642,14 @@
             </a-upload-dragger>
           </a-form-item>
 
-          <a-form-item>
+          <a-form-item style="margin-bottom: 8px;">
             <a-checkbox v-model:checked="importSkipDuplicates">
               Skip duplicate phone numbers
+            </a-checkbox>
+          </a-form-item>
+          <a-form-item style="margin-bottom: 16px;">
+            <a-checkbox v-model:checked="importSkipNonMobile">
+              Skip non-mobile phone numbers
             </a-checkbox>
           </a-form-item>
 
@@ -616,7 +667,7 @@ import { reactive, ref, onMounted, computed, watch } from 'vue';
 import { message } from 'ant-design-vue';
 import { 
   UserOutlined, LockOutlined, ApiOutlined, PhoneOutlined, 
-  MessageOutlined, TeamOutlined, CloudUploadOutlined, 
+  MessageOutlined, TeamOutlined, CloudUploadOutlined, CloudDownloadOutlined,
   LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined, RocketOutlined,
   HistoryOutlined, DeleteOutlined, ContactsOutlined, FolderOutlined, PlusOutlined,
   EditOutlined, SettingOutlined, InboxOutlined, SyncOutlined, SearchOutlined
@@ -626,6 +677,28 @@ import Papa from 'papaparse';
 
 const activeTab = ref('single');
 const loading = ref(false);
+
+const isMobileNumber = (phone) => {
+  if (!phone) return false;
+  const cleanPhone = phone.trim().replace(/[^\d+]/g, '');
+  
+  if (cleanPhone.startsWith('+94')) {
+    return /^\+947[0-9]\d{7}$/.test(cleanPhone);
+  }
+  if (cleanPhone.startsWith('94')) {
+    return /^947[0-9]\d{7}$/.test(cleanPhone);
+  }
+  if (cleanPhone.startsWith('0')) {
+    return /^07[0-9]\d{7}$/.test(cleanPhone);
+  }
+  if (cleanPhone.startsWith('+')) {
+    return /^\+\d{8,15}$/.test(cleanPhone);
+  }
+  if (/^7[0-9]\d{7}$/.test(cleanPhone)) {
+    return true;
+  }
+  return false;
+};
 
 const credentials = reactive({
   routerIp: '192.168.8.1',
@@ -720,6 +793,7 @@ const contactForm = reactive({
 const isImportModalVisible = ref(false);
 const importLoading = ref(false);
 const importSkipDuplicates = ref(true);
+const importSkipNonMobile = ref(true);
 const importForm = reactive({
   groups: [],
   parsedList: []
@@ -915,12 +989,18 @@ const handleImportContacts = () => {
 
   importLoading.value = true;
   let addedCount = 0;
-  let skippedCount = 0;
+  let skippedDuplicatesCount = 0;
+  let skippedNonMobileCount = 0;
 
   importForm.parsedList.forEach(item => {
+    if (importSkipNonMobile.value && !isMobileNumber(item.phone)) {
+      skippedNonMobileCount++;
+      return;
+    }
+
     const exists = phonebook.value.some(c => c.phone === item.phone);
     if (exists && importSkipDuplicates.value) {
-      skippedCount++;
+      skippedDuplicatesCount++;
     } else {
       phonebook.value.push({
         key: (Date.now() + Math.random()).toString(),
@@ -933,7 +1013,10 @@ const handleImportContacts = () => {
   });
 
   savePhonebookOnServer();
-  message.success(`Imported ${addedCount} contacts. Skipped ${skippedCount} duplicates.`);
+  let statusMsg = `Imported ${addedCount} contacts.`;
+  if (skippedDuplicatesCount > 0) statusMsg += ` Skipped ${skippedDuplicatesCount} duplicate(s).`;
+  if (skippedNonMobileCount > 0) statusMsg += ` Skipped ${skippedNonMobileCount} non-mobile number(s).`;
+  message.success(statusMsg);
   
   isImportModalVisible.value = false;
   importLoading.value = false;
@@ -954,6 +1037,11 @@ const handleSaveContact = () => {
 
   if (!name || !phone) {
     message.error('Name and Phone Number are required.');
+    return;
+  }
+
+  if (!isMobileNumber(phone)) {
+    message.error('Please enter a valid mobile number.');
     return;
   }
 
@@ -1049,6 +1137,74 @@ const bulkMoveContacts = (targetGroup) => {
   savePhonebookOnServer();
   message.success(`Moved ${selectedPhonebookRowKeys.value.length} contacts to group "${targetGroup}".`);
   selectedPhonebookRowKeys.value = [];
+};
+
+const removeNonMobileContacts = () => {
+  const initialCount = phonebook.value.length;
+  phonebook.value = phonebook.value.filter(c => isMobileNumber(c.phone));
+  const removed = initialCount - phonebook.value.length;
+  
+  if (removed > 0) {
+    savePhonebookOnServer();
+    selectedPhonebookRowKeys.value = selectedPhonebookRowKeys.value.filter(k => 
+      phonebook.value.some(c => c.key === k)
+    );
+    message.success(`Successfully removed ${removed} non-mobile contact(s).`);
+  } else {
+    message.info('No non-mobile contact numbers found.');
+  }
+};
+
+const removeNonMobileFromPreview = () => {
+  const initialCount = contacts.value.length;
+  contacts.value = contacts.value.filter(c => isMobileNumber(c.phone));
+  selectedRowKeys.value = selectedRowKeys.value.filter(k => {
+    const contact = contacts.value.find(c => c.key === k);
+    return contact && isMobileNumber(contact.phone);
+  });
+  const removed = initialCount - contacts.value.length;
+  message.success(`Removed ${removed} non-mobile contact(s) from preview.`);
+};
+
+const exportAllContacts = () => {
+  if (phonebook.value.length === 0) {
+    message.warning('No contacts to export.');
+    return;
+  }
+
+  const headers = ['name', 'phone', 'groups'];
+  const csvContent = [
+    headers.join(','),
+    ...phonebook.value.map(c => {
+      const escapedName = `"${c.name.replace(/"/g, '""')}"`;
+      const escapedPhone = `"${c.phone.replace(/"/g, '""')}"`;
+      const escapedGroups = `"${(Array.isArray(c.groups) ? c.groups.join(', ') : '').replace(/"/g, '""')}"`;
+      return [escapedName, escapedPhone, escapedGroups].join(',');
+    })
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `contacts_export_${Date.now()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  message.success('Contacts exported successfully!');
+};
+
+const deleteAllContacts = async () => {
+  const count = phonebook.value.length;
+  if (count === 0) {
+    message.info('The phone book is already empty.');
+    return;
+  }
+  
+  phonebook.value = [];
+  selectedPhonebookRowKeys.value = [];
+  await savePhonebookOnServer();
+  message.success(`Successfully deleted all ${count} contacts.`);
 };
 
 const importGroupsToBroadcast = (selectedGroups) => {
@@ -1294,6 +1450,11 @@ const sendApiRequest = async (phone, content) => {
 const onSendSingle = async () => {
   if (!credentials.password || !singleForm.phone || !singleForm.content) {
     message.error('Please fill in all required fields.');
+    return;
+  }
+
+  if (!isMobileNumber(singleForm.phone)) {
+    message.error('Please enter a valid mobile number.');
     return;
   }
   
