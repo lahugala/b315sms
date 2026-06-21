@@ -1,31 +1,86 @@
 <template>
-  <div style="padding: 40px 15px; min-height: 100vh; width: 100%;">
-    <a-card class="glass-card" :style="{ width: '100%', maxWidth: '1200px', margin: '0 auto' }">
-      <template #cover>
-        <div style="text-align: center; padding-top: 32px;">
-          <a-typography-title :level="2" class="title-gradient">
-            Huawei Connect
-          </a-typography-title>
-          <div class="subtitle">Professional SMS Broadcasting Portal</div>
-        </div>
-      </template>
-
-      <!-- Settings Bar -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 12px 18px; background-color: #f8fafc; border-radius: 14px; border: 1px solid #e2e8f0; flex-wrap: wrap; gap: 10px;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div v-if="credentials.password" style="font-size: 13px; color: #10b981; display: flex; align-items: center; gap: 4px; font-weight: 500;">
-            <CheckCircleOutlined /> Router Connected ({{ credentials.routerIp }})
+  <div style="padding: 30px 15px; min-height: 100vh; width: 100%;">
+    <div style="width: 100%; max-width: 1200px; margin: 0 auto;">
+      <!-- Sleek Top Header / Navbar -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 16px 24px; background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.02); flex-wrap: wrap; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: linear-gradient(135deg, #2563eb, #3b82f6); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: 700; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);">
+            H
           </div>
-          <div v-else style="font-size: 13px; color: #f59e0b; display: flex; align-items: center; gap: 4px; font-weight: 500;">
-            <CloseCircleOutlined /> Router Credentials Required
+          <div>
+            <h1 class="title-gradient" style="margin: 0; line-height: 1.2;">Huawei Connect</h1>
+            <div class="subtitle">Professional SMS Broadcasting Portal</div>
           </div>
         </div>
-        <a-button type="default" @click="isSettingsModalVisible = true" style="border-radius: 8px; display: flex; align-items: center; gap: 6px;">
-          <SettingOutlined /> Configure Router
-        </a-button>
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <div v-if="credentials.password" style="font-size: 13px; color: #10b981; display: flex; align-items: center; gap: 6px; font-weight: 600; background: #ecfdf5; padding: 6px 12px; border-radius: 8px; border: 1px solid #d1fae5;">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+            Connected ({{ credentials.routerIp }})
+          </div>
+          <div v-else style="font-size: 13px; color: #f59e0b; display: flex; align-items: center; gap: 6px; font-weight: 600; background: #fffbeb; padding: 6px 12px; border-radius: 8px; border: 1px solid #fef3c7;">
+            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; box-shadow: 0 0 8px #f59e0b;"></span>
+            Config Required
+          </div>
+          <a-button type="default" @click="isSettingsModalVisible = true" style="border-radius: 8px; display: flex; align-items: center; gap: 6px; font-weight: 500;">
+            <SettingOutlined /> Configure
+          </a-button>
+        </div>
       </div>
 
-      <a-tabs v-model:activeKey="activeTab" centered style="margin-top: 10px;">
+      <!-- Metrics Row -->
+      <a-row :gutter="[16, 16]" class="metrics-row">
+        <a-col :xs="24" :sm="12" :md="6">
+          <div class="metric-card router-card">
+            <div class="metric-icon-wrapper">
+              <ApiOutlined />
+            </div>
+            <div class="metric-info">
+              <div class="metric-title">Router Status</div>
+              <div class="metric-value" style="font-size: 14px; text-transform: uppercase;">{{ credentials.password ? 'CONNECTED' : 'OFFLINE' }}</div>
+              <div class="metric-subtitle">{{ credentials.routerIp }}</div>
+            </div>
+          </div>
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="6">
+          <div class="metric-card contacts-card">
+            <div class="metric-icon-wrapper">
+              <ContactsOutlined />
+            </div>
+            <div class="metric-info">
+              <div class="metric-title">Phone Book</div>
+              <div class="metric-value">{{ phonebook.length }}</div>
+              <div class="metric-subtitle">Saved Contacts</div>
+            </div>
+          </div>
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="6">
+          <div class="metric-card queue-card">
+            <div class="metric-icon-wrapper">
+              <RocketOutlined />
+            </div>
+            <div class="metric-info">
+              <div class="metric-title">Broadcast Queue</div>
+              <div class="metric-value">{{ contacts.length }}</div>
+              <div class="metric-subtitle">Pending / Loaded</div>
+            </div>
+          </div>
+        </a-col>
+        <a-col :xs="24" :sm="12" :md="6">
+          <div class="metric-card inbox-card">
+            <div class="metric-icon-wrapper">
+              <InboxOutlined />
+            </div>
+            <div class="metric-info">
+              <div class="metric-title">Inbox</div>
+              <div class="metric-value">{{ inboxMessages.length }}</div>
+              <div class="metric-subtitle">Received Messages</div>
+            </div>
+          </div>
+        </a-col>
+      </a-row>
+
+      <a-card class="glass-card">
+        <a-tabs v-model:activeKey="activeTab" centered style="margin-top: 0px;">
         <!-- Single SMS Mode -->
         <a-tab-pane key="single">
           <template #tab>
@@ -661,6 +716,7 @@
       </a-modal>
     </a-card>
   </div>
+</div>
 </template>
 
 <script setup>
